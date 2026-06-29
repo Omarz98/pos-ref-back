@@ -50,7 +50,7 @@ public class Mapper {
                 .build();
     }
 
-    public static ProductosDTO toDTO(ProductosDTO p){
+    public static ProductosDTO toDTO(Productos p){
         if(p==null) return null;
 
         return ProductosDTO.builder()
@@ -59,9 +59,9 @@ public class Mapper {
                 .codigoBarras(p.getCodigoBarras())
                 .nombre(p.getNombre())
                 .descripcion(p.getDescripcion())
-                .categoriaId(p.getCategoriaId())
-                .marcaId(p.getMarcaId())
-                .proveedorId(p.getProveedorId())
+                .categoriaId(p.getCategoria().getId())
+                .marcaId(p.getMarca().getId())
+                .proveedorId(p.getProveedor().getId())
                 .precioCompra(p.getPrecioCompra())
                 .precioVenta(p.getPrecioVenta())
                 .stock(p.getStock())

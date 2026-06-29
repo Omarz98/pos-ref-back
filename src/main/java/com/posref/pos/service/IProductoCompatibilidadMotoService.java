@@ -8,6 +8,6 @@ import java.util.List;
 public interface IProductoCompatibilidadMotoService {
     List<ProductoCompatibilidadMotoDTO> traerCompatibilidades();
     ProductoCompatibilidadMotoDTO crearCompatibilidad(ProductoCompatibilidadMotoDTO compatibilidadDto);
-    ProductoCompatibilidadMotoDTO actualizarConpatibilidad(ProductoCompatibilidadMotoDTO compatibilidadDto);
+    ProductoCompatibilidadMotoDTO actualizarConpatibilidad(Long id, ProductoCompatibilidadMotoDTO compatibilidadDto);
     void eliminarCompatibilidad(Long id);
 }

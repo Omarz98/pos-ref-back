@@ -55,7 +55,7 @@ public class MotoModelosService implements IMotoModelosService{
         MotoModelos m = repo.findById(id).orElseThrow(() -> new NotFoundException("MotoModelo no encontrada"));
         if (m == null) throw new RuntimeException("MotoModelo no encontrada");
 
-        m.setId(motoModeloDto.getId());
+        //m.setId(motoModeloDto.getId());
 
         if (motoModeloDto.getMotoMarcaId()!=null) {
             MotoMarcas motomarca = motoMarcaRepo.findById(motoModeloDto.getMotoMarcaId()).orElseThrow(() -> new NotFoundException("MotoModelo no encontrada"));

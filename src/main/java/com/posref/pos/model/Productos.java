@@ -45,6 +45,7 @@ public class Productos {
 
     private boolean activo;
 
+    @Column(name = "fecha_creacion", nullable = false)
     private LocalDateTime fechaCreacion;
 
     @PrePersist

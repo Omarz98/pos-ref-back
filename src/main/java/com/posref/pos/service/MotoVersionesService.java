@@ -59,7 +59,7 @@ public class MotoVersionesService implements IMotoVersionesService{
         MotoVersiones m = motoverRepo.findById(id).orElseThrow(() -> new NotFoundException("MotoVersion no encontrada"));
         if (m == null) throw new RuntimeException("MotoVersion no encontrada");
 
-        m.setId(motoVersionDto.getId());
+        //m.setId(motoVersionDto.getId());
 
         if (motoVersionDto.getMotoModeloId()!=null) {
             MotoModelos motomodelo = motoModeloRepo.findById(motoVersionDto.getMotoModeloId()).orElseThrow(() -> new NotFoundException("MotoVersion no encontrada"));

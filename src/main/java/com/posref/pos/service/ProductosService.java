@@ -11,6 +11,7 @@ import com.posref.pos.repository.ProveedoresRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -79,7 +80,7 @@ public class ProductosService implements IProductosService{
         Productos p = productoRepo.findById(id).orElseThrow(() -> new NotFoundException("Producto no encontrado"));
         if (p == null) throw new RuntimeException("Producto no encontrada");
 
-        p.setId(productoDto.getId());
+        //p.setId(productoDto.getId());
         p.setCodigo(productoDto.getCodigo());
         p.setCodigoBarras(productoDto.getCodigoBarras());
         p.setNombre(productoDto.getNombre());
@@ -109,7 +110,7 @@ public class ProductosService implements IProductosService{
         p.setStockMinimo(productoDto.getStockMinimo());
         p.setUnidadMedida(productoDto.getUnidadMedida());
         p.setActivo(true);
-        p.setFechaCreacion(productoDto.getFechaCreacion());
+        p.setFechaCreacion(LocalDateTime.now());
 
         productoRepo.save(p);
 

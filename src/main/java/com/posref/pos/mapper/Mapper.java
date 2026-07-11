@@ -111,5 +111,18 @@ public class Mapper {
 
     }
 
+    public static ClientesDTO toDTO(Clientes c){
+        if(c==null) return null;
 
+        return ClientesDTO.builder()
+                .id(c.getId())
+                .nombre(c.getNombre())
+                .telefono(c.getTelefono())
+                .email(c.getEmail())
+                .direccion(c.getDireccion())
+                .rfc(c.getRfc())
+                .activo(c.isActivo())
+                .fechaCreacion(c.getFechaCreacion())
+                .build();
+    }
 }

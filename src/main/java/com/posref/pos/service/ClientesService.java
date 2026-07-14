@@ -5,6 +5,8 @@ import com.posref.pos.exception.NotFoundException;
 import com.posref.pos.mapper.Mapper;
 import com.posref.pos.model.Categorias;
 import com.posref.pos.model.Clientes;
+
+
 import com.posref.pos.model.Productos;
 import com.posref.pos.repository.ClientesRepository;
 import org.springframework.beans.factory.annotation.Autowired;

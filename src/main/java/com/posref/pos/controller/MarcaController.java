@@ -17,7 +17,7 @@ import java.util.List;
 @CrossOrigin(origins = "http://localhost:5173") // Para conectar con React
 public class MarcaController {
     @Autowired
-    private MarcasService marcasService;
+    private IMarcasService marcasService;
 
     @GetMapping
     public ResponseEntity<List<MarcasDTO>> traerCategorias(){

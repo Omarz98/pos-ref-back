@@ -17,6 +17,7 @@ public class ProveedoresService implements IProveedoresService{
 
     @Override
     public List<ProveedoresDTO> traerProveedores(){
+
         return repo.findAll().stream().map(Mapper::toDTO).toList();
     }
 

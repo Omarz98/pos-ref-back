@@ -2,6 +2,7 @@ package com.posref.pos.controller;
 
 import com.posref.pos.dto.MotoVersionesDTO;
 import com.posref.pos.dto.ProductoCompatibilidadMotoDTO;
+import com.posref.pos.service.IProductoCompatibilidadMotoService;
 import com.posref.pos.service.ProductoCompatiilidadMotoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +17,7 @@ import java.util.List;
 public class ProductoCompatiilidadMotoController {
 
     @Autowired
-    private ProductoCompatiilidadMotoService compatibilidadService;
+    private IProductoCompatibilidadMotoService compatibilidadService;
 
     @GetMapping
     public ResponseEntity<List<ProductoCompatibilidadMotoDTO>> traerCompatibilidades(){

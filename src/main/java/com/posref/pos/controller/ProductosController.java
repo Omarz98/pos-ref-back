@@ -1,6 +1,7 @@
 package com.posref.pos.controller;
 
 import com.posref.pos.dto.ProductosDTO;
+import com.posref.pos.service.IProductosService;
 import com.posref.pos.service.ProductosService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +16,7 @@ import java.util.List;
 public class ProductosController {
 
     @Autowired
-    private ProductosService productosService;
+    private IProductosService productosService;
 
     @GetMapping
     public ResponseEntity<List<ProductosDTO>> traerMotoModelos(){

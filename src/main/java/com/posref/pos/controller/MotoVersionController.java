@@ -2,6 +2,7 @@ package com.posref.pos.controller;
 
 import com.posref.pos.dto.MotoModelosDTO;
 import com.posref.pos.dto.MotoVersionesDTO;
+import com.posref.pos.service.IMotoVersionesService;
 import com.posref.pos.service.MotoModelosService;
 import com.posref.pos.service.MotoVersionesService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +17,7 @@ import java.util.List;
 @CrossOrigin(origins = "http://localhost:5173") // Para conectar con React
 public class MotoVersionController {
     @Autowired
-    private MotoVersionesService motoVersionService;
+    private IMotoVersionesService motoVersionService;
 
     @GetMapping
     public ResponseEntity<List<MotoVersionesDTO>> traerMotoModelos(){

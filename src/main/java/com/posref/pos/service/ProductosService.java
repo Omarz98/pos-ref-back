@@ -105,7 +105,7 @@ public class ProductosService implements IProductosService{
         }
 
         p.setPrecioCompra(productoDto.getPrecioCompra());
-        p.setPrecioVenta(productoDto.getPrecioCompra());
+        p.setPrecioVenta(productoDto.getPrecioVenta());
         p.setStock(productoDto.getStock());
         p.setStockMinimo(productoDto.getStockMinimo());
         p.setUnidadMedida(productoDto.getUnidadMedida());

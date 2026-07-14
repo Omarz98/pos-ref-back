@@ -125,4 +125,16 @@ public class Mapper {
                 .fechaCreacion(c.getFechaCreacion())
                 .build();
     }
+
+    public static MotoServiciosDTO toDTO(MotoServicios s){
+        if(s==null) return null;
+
+        return MotoServiciosDTO.builder()
+                .id(s.getId())
+                .activo(s.isActivo())
+                .codigo(s.getCodigo())
+                .nombre(s.getNombre())
+                .precioVenta(s.getPrecioVenta())
+                .build();
+    }
 }

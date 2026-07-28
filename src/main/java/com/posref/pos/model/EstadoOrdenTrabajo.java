@@ -1,0 +1,16 @@
+package com.posref.pos.model;
+
+public enum EstadoOrdenTrabajo {
+    RECIBIDA,
+    EN_DIAGNOSTICO,
+    ESPERANDO_AUTORIZACION,
+    AUTORIZADA,
+    RECHAZADA,
+    EN_REPARACION,
+    ESPERANDO_REFACCIONES,
+    EN_PRUEBAS,
+    TERMINADA,
+    LISTA_PARA_ENTREGA,
+    ENTREGADA,
+    PAGADA, PAGO_PARCIAL, CANCELADA
+}

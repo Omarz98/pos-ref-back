@@ -27,6 +27,9 @@ public class MotoServiciosService implements IMotoServiciosService {
                 .activo(servicioDto.isActivo())
                 .codigo(servicioDto.getCodigo())
                 .precioVenta(servicioDto.getPrecioVenta())
+                .duracionEstimadaMinutos(servicioDto.getDuracionEstimadaMinutos())
+                .aplicaIva(servicioDto.isAplicaIva())
+                .descripcion(servicioDto.getDescripcion())
                 .build();
         return Mapper.toDTO(repo.save(servicio));
     }
@@ -40,6 +43,9 @@ public class MotoServiciosService implements IMotoServiciosService {
         servicio.setCodigo(servicioDto.getCodigo());
         servicio.setPrecioVenta(servicioDto.getPrecioVenta());
         servicio.setActivo(servicioDto.isActivo());
+        servicio.setDescripcion(servicioDto.getDescripcion());
+        servicio.setAplicaIva(servicioDto.isAplicaIva());
+        servicio.setDuracionEstimadaMinutos(servicioDto.getDuracionEstimadaMinutos());
 
         return Mapper.toDTO(repo.save(servicio));
     }

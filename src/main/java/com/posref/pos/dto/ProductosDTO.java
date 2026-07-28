@@ -27,12 +27,13 @@ public class ProductosDTO {
     private BigDecimal precioCompra;
     private BigDecimal precioVenta;
 
-    private Integer stock;
+    private Integer stockActual;
     private Integer stockMinimo;
 
     private String unidadMedida;
 
     private boolean activo;
+    private boolean compatibilidadUniversal;
 
     private LocalDateTime fechaCreacion;
 }

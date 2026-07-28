@@ -39,7 +39,7 @@ public class MotoModelosService implements IMotoModelosService{
 
         MotoModelos motoModelos = MotoModelos.builder()
                 .id(motoModelosDto.getId())
-                .motoMarca(marca)
+                .marca(marca)
                 .nombre(motoModelosDto.getNombre())
                 .activo(true)
                 .build();
@@ -60,7 +60,7 @@ public class MotoModelosService implements IMotoModelosService{
         if (motoModeloDto.getMotoMarcaId()!=null) {
             MotoMarcas motomarca = motoMarcaRepo.findById(motoModeloDto.getMotoMarcaId()).orElseThrow(() -> new NotFoundException("MotoModelo no encontrada"));
             if (motomarca == null) throw new NotFoundException("MotoMarca  no encontrada");
-            m.setMotoMarca(motomarca);
+            m.setMarca(motomarca);
         }
 
         m.setNombre(motoModeloDto.getNombre());

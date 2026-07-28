@@ -1,10 +1,14 @@
 package com.posref.pos.controller;
 
 import com.posref.pos.dto.CategoriasDTO;
+import com.posref.pos.dto.ClienteMotoRequest;
+import com.posref.pos.dto.ClienteMotoResponse;
 import com.posref.pos.dto.ClientesDTO;
+import com.posref.pos.model.Motocicleta;
 import com.posref.pos.service.ICategoriasService;
 import com.posref.pos.service.IClientesService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,6 +43,34 @@ public class ClienteController {
     public ResponseEntity<Void> borrarCliente(@PathVariable Long id){
         clientesService.eliminarCliente(id);
         return ResponseEntity.noContent().build();
+    }
+
+
+    @PostMapping("/{clienteId}/motos")
+    public ResponseEntity<ClienteMotoResponse> agregarMoto(
+            @PathVariable Long clienteId,
+            @RequestBody ClienteMotoRequest request
+    ) {
+
+        ClienteMotoResponse moto =
+                clientesService.agregarMoto(
+                        clienteId,
+                        request
+                );
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(moto);
+    }
+
+    @GetMapping("/{clienteId}/motos")
+    public ResponseEntity<List<ClienteMotoResponse>> obtenerMotos(
+            @PathVariable Long clienteId
+    ) {
+
+        return ResponseEntity.ok(
+                clientesService.obtenerMotos(clienteId)
+        );
     }
 
 }

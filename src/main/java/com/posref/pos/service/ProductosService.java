@@ -65,11 +65,12 @@ public class ProductosService implements IProductosService{
                 .proveedor(proveedor)
                 .precioCompra(productoDto.getPrecioCompra())
                 .precioVenta(productoDto.getPrecioVenta())
-                .stock(productoDto.getStock())
+                .stockActual(productoDto.getStockActual())
                 .stockMinimo(productoDto.getStockMinimo())
                 .unidadMedida(productoDto.getUnidadMedida())
                 .activo(true)
                 .fechaCreacion(productoDto.getFechaCreacion())
+                .compatibilidadUniversal(productoDto.isCompatibilidadUniversal())
                 .build();
 
         return Mapper.toDTO(productoRepo.save(producto));
@@ -106,11 +107,12 @@ public class ProductosService implements IProductosService{
 
         p.setPrecioCompra(productoDto.getPrecioCompra());
         p.setPrecioVenta(productoDto.getPrecioVenta());
-        p.setStock(productoDto.getStock());
+        p.setStockActual(productoDto.getStockActual());
         p.setStockMinimo(productoDto.getStockMinimo());
         p.setUnidadMedida(productoDto.getUnidadMedida());
         p.setActivo(true);
         p.setFechaCreacion(LocalDateTime.now());
+        p.setCompatibilidadUniversal(productoDto.isCompatibilidadUniversal());
 
         productoRepo.save(p);
 

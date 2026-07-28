@@ -1,11 +1,19 @@
 package com.posref.pos.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+
+@   Table(
+        name = "moto_servicios",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_moto_servicios_codigo",
+                        columnNames = "codigo"
+                )
+        }
+)
 @Getter
 @Setter
 @AllArgsConstructor
@@ -17,9 +25,33 @@ public class MotoServicios {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(length = 50, nullable = false)
     private String codigo;
+
+    @Column(nullable = false)
     private String nombre;
-    private String precioVenta;
-    private boolean activo;
+
+    @Column(length = 500)
+    private String descripcion;
+
+    @Builder.Default
+    @Column(
+            name = "precio_venta",
+            nullable = false,
+            precision = 12,
+            scale = 2
+    )
+    private BigDecimal precioVenta = BigDecimal.ZERO;
+
+    @Column(name = "duracion_estimada_minutos")
+    private Integer duracionEstimadaMinutos;
+
+    @Builder.Default
+    @Column(name = "aplica_iva", nullable = false)
+    private Boolean aplicaIva = true;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean activo = true;
 
 }

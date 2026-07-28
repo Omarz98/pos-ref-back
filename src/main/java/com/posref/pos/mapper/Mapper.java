@@ -2,6 +2,9 @@ package com.posref.pos.mapper;
 
 import com.posref.pos.dto.*;
 import com.posref.pos.model.*;
+import org.hibernate.mapping.List;
+
+import java.util.stream.Collectors;
 
 public class Mapper {
 
@@ -46,7 +49,7 @@ public class Mapper {
         return MotoMarcasDTO.builder()
                 .id(m.getId())
                 .nombre(m.getNombre())
-                .activo(m.isActivo())
+                .activo(m.getActivo())
                 .build();
     }
 
@@ -64,11 +67,12 @@ public class Mapper {
                 .proveedorId(p.getProveedor().getId())
                 .precioCompra(p.getPrecioCompra())
                 .precioVenta(p.getPrecioVenta())
-                .stock(p.getStock())
+                .stockActual(p.getStockActual())
                 .stockMinimo(p.getStockMinimo())
                 .unidadMedida(p.getUnidadMedida())
                 .activo(p.isActivo())
                 .fechaCreacion(p.getFechaCreacion())
+                .compatibilidadUniversal(p.getCompatibilidadUniversal())
                 .build();
 
     }
@@ -78,9 +82,9 @@ public class Mapper {
 
         return MotoModelosDTO.builder()
                 .id(m.getId())
-                .motoMarcaId(m.getMotoMarca().getId())
+                .motoMarcaId(m.getMarca().getId())
                 .nombre(m.getNombre())
-                .activo(m.isActivo())
+                .activo(m.getActivo())
                 .build();
     }
 
@@ -131,10 +135,95 @@ public class Mapper {
 
         return MotoServiciosDTO.builder()
                 .id(s.getId())
-                .activo(s.isActivo())
+                .activo(s.getActivo())
                 .codigo(s.getCodigo())
                 .nombre(s.getNombre())
                 .precioVenta(s.getPrecioVenta())
+                .aplicaIva(s.getAplicaIva())
+                .duracionEstimadaMinutos(s.getDuracionEstimadaMinutos())
+                .descripcion(s.getDescripcion())
+                .build();
+    }
+
+    public static VentaResponse convertirVentaResponse(Ventas venta) {
+
+        java.util.List<DetalleResponse> items = venta.getDetalles()
+                .stream()
+                .map(detalle -> DetalleResponse.builder()
+                        .id(detalle.getId())
+                        .referenciaId(detalle.getReferenciaId())
+                        .productoNombre(detalle.getDescripcion())
+                        .tipo(String.valueOf(detalle.getTipo()))
+                        .cantidad(detalle.getCantidad())
+                        .precioUnitario(detalle.getPrecioUnitario())
+                        .subtotal(detalle.getSubtotal())
+                        .build())
+                .collect(Collectors.toList());
+
+        java.util.List<PagoResponse> pagos = venta.getPagos()
+                .stream()
+                .map(pago -> PagoResponse.builder()
+                        .id(pago.getId())
+                        .metodoPago(String.valueOf(pago.getMetodo()))
+                        .monto(pago.getMonto())
+                        .fecha(pago.getFecha())
+                        .ventaId(pago.getVenta().getId())
+                        .build())
+                .collect(Collectors.toList());
+
+        return VentaResponse.builder()
+                .id(venta.getId())
+                .fecha(venta.getFecha())
+                .estado(String.valueOf(venta.getEstado()))
+                .clienteId(
+                        venta.getCliente() != null
+                                ? venta.getCliente().getId()
+                                : null
+                )
+                .clienteNombre(
+                        venta.getCliente() != null
+                                ? venta.getCliente().getNombre()
+                                : null
+                )
+                .subtotal(venta.getSubtotal())
+                .iva(venta.getIva())
+                .total(venta.getTotal())
+                .totalPagado(venta.getTotalPagado())
+                .saldoPendiente(venta.getSaldoPendiente())
+                .items(items)
+                .pagos(pagos)
+                .build();
+    }
+
+    private VentaResponse convertirAResponse(Ventas venta) {
+
+        return VentaResponse.builder()
+                .id(venta.getId())
+                .fecha(venta.getFecha())
+
+                .clienteId(
+                        venta.getCliente() != null
+                                ? venta.getCliente().getId()
+                                : null
+                )
+
+                .clienteNombre(
+                        venta.getCliente() != null
+                                ? venta.getCliente().getNombre()
+                                : null
+                )
+
+                .subtotal(venta.getSubtotal())
+                .iva(venta.getIva())
+                .total(venta.getTotal())
+                .totalPagado(venta.getTotalPagado())
+                .saldoPendiente(venta.getSaldoPendiente())
+
+                .estado(
+                        venta.getEstado() != null
+                                ? venta.getEstado().name()
+                                : null
+                )
                 .build();
     }
 }

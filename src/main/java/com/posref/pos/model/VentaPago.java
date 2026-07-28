@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -18,12 +19,17 @@ public class VentaPago {
     private Long id;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
     private MetodoPago metodo;
 
+    @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal monto;
 
-    @ManyToOne
-    @JoinColumn(name = "venta_id")
+    @Column(nullable = false)
+    private LocalDateTime fecha;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "venta_id", nullable = false)
     private Ventas venta;
 
 }

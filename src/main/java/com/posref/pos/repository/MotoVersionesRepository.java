@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface MotoVersionesRepository extends JpaRepository<MotoVersiones,Long> {
     List<MotoVersiones> findByMotoModeloId(Long motoModeloId);
+    List<MotoVersiones> findByMotoModeloIdAndActivoTrueOrderByAnioDesc(Long motoModeloId);
 }

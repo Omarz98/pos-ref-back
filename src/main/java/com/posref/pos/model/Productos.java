@@ -37,13 +37,17 @@ public class Productos {
     private BigDecimal precioCompra;
     private BigDecimal precioVenta;
 
-    private Integer stock;
+    private Integer stockActual;
 
     private Integer stockMinimo;
 
     private String unidadMedida;
 
     private boolean activo;
+
+    @Builder.Default
+    @Column(name = "compatibilidad_universal", nullable = false)
+    private Boolean compatibilidadUniversal = false;
 
     @Column(name = "fecha_creacion", nullable = false)
     private LocalDateTime fechaCreacion;

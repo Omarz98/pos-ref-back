@@ -17,4 +17,10 @@ public class DetalleRequest {
     private Integer cantidad;
 
     private BigDecimal precio;
+
+    private Long productoId;
+
+    private Long servicioId;
+
+    private String codigo;
 }

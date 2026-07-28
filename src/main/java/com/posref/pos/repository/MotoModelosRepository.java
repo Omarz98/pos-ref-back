@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface MotoModelosRepository extends JpaRepository<MotoModelos,Long> {
     //List<MotoModelos> findByMarcaId(Long marcaId);
+    List<MotoModelos> findByMarcaIdAndActivoTrueOrderByNombreAsc(Long marcaId);
+
 }

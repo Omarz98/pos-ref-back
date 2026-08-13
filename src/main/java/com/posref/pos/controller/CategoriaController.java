@@ -5,6 +5,7 @@ import com.posref.pos.service.CategoriasService;
 import com.posref.pos.service.ICategoriasService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -18,11 +19,13 @@ public class CategoriaController {
     @Autowired
     private ICategoriasService categoriasService;
 
+    @PreAuthorize("hasAuthority('CATEGORIA_VER')")
     @GetMapping
     public ResponseEntity<List<CategoriasDTO>> traerCategorias(){
         return ResponseEntity.ok(categoriasService.traerCategorias());
     }
 
+    @PreAuthorize("hasAuthority('CATEGORIA_CREAR')")
     @PostMapping
     public ResponseEntity<CategoriasDTO> crearCategoria(@RequestBody CategoriasDTO dto){
         CategoriasDTO creado = categoriasService.crearCategoria(dto);
@@ -30,11 +33,13 @@ public class CategoriaController {
         return ResponseEntity.created(URI.create("/api/categorias"+creado.getId())).body(creado);
     }
 
+    @PreAuthorize("hasAuthority('CATEGORIA_EDITAR')")
     @PutMapping("/{id}")
     public ResponseEntity<CategoriasDTO> actualizarCategoria(@PathVariable Long id, @RequestBody CategoriasDTO dto){
         return ResponseEntity.ok(categoriasService.actualizarCategoria(id,dto));
     }
 
+    @PreAuthorize("hasAuthority('CATEGORIA_ELIMINAR')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> borrarCategoria(@PathVariable Long id){
         categoriasService.eliminarCategoria(id);

@@ -10,6 +10,7 @@ import com.posref.pos.service.IClientesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -22,6 +23,7 @@ public class ClienteController {
     @Autowired
     private IClientesService clientesService;
 
+    @PreAuthorize("hasAuthority('CLIENTE_VER')")
     @GetMapping
     public ResponseEntity<List<ClientesDTO>> traerClientes(){
         return ResponseEntity.ok(clientesService.traerClientes());

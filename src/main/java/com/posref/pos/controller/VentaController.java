@@ -9,6 +9,7 @@ import com.posref.pos.service.OrdenTallerService;
 import com.posref.pos.service.VentaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,6 +23,7 @@ public class VentaController {
     private final VentaService ventaService;
     private final OrdenTallerService ordenServicioService;
 
+    @PreAuthorize("hasAuthority('VENTA_CREAR')")
     @PostMapping
     public ResponseEntity<VentaResponse> crearVenta(
             @RequestBody VentaRequest request
@@ -32,6 +34,7 @@ public class VentaController {
         );
     }
 
+    @PreAuthorize("hasAuthority('VENTA_VER')")
     @GetMapping
     public ResponseEntity<List<VentaResponse>> listar() {
 
@@ -40,6 +43,7 @@ public class VentaController {
         );
     }
 
+    @PreAuthorize("hasAuthority('VENTA_ACTUALIZAR')")
     @PutMapping("/{id}/cobrar")
     public ResponseEntity<VentaResponse> cobrarVenta(
             @PathVariable Long id,
@@ -50,6 +54,7 @@ public class VentaController {
         return ResponseEntity.ok(venta);
     }
 
+    //@PreAuthorize("hasAuthority('VENTA_VER')")
     @GetMapping("/pendientes")
     public ResponseEntity<List<OrdenTallerResponse>> obtenerPendientes() {
         return ResponseEntity.ok(

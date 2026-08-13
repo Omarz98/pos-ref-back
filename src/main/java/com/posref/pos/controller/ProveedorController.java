@@ -5,6 +5,7 @@ import com.posref.pos.dto.ProveedoresDTO;
 import com.posref.pos.service.IProveedoresService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -17,11 +18,13 @@ public class ProveedorController {
     @Autowired
     private IProveedoresService proveedorService;
 
+    @PreAuthorize("hasAuthority('PROVEEDOR_VER')")
     @GetMapping
     public ResponseEntity<List<ProveedoresDTO>> traerProveedores(){
         return ResponseEntity.ok(proveedorService.traerProveedores());
     }
 
+    @PreAuthorize("hasAuthority('PROVEEDOR_CREAR')")
     @PostMapping
     public ResponseEntity<ProveedoresDTO> crearProveedor(@RequestBody ProveedoresDTO dto){
         ProveedoresDTO creado = proveedorService.crearProveedor(dto);
@@ -29,11 +32,13 @@ public class ProveedorController {
         return ResponseEntity.created(URI.create("/api/proveedores"+creado.getId())).body(creado);
     }
 
+    @PreAuthorize("hasAuthority('PROVEEDOR_EDITAR')")
     @PutMapping("/{id}")
     public ResponseEntity<ProveedoresDTO> actualizarCategoria(@PathVariable Long id, @RequestBody ProveedoresDTO dto){
         return ResponseEntity.ok(proveedorService.actualizarProveedor(id,dto));
     }
 
+    @PreAuthorize("hasAuthority('PROVEEDOR_ELIMINAR')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> borrarCategoria(@PathVariable Long id){
         proveedorService.eliminarProveedor(id);

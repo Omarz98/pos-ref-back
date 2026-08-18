@@ -1,9 +1,13 @@
 package com.posref.pos.dto.dashboard;
 
+import lombok.Builder;
+
 import java.math.BigDecimal;
 import java.util.List;
 
+@Builder
 public record DashboardResponse(
+
 
         BigDecimal ventasHoy,
         BigDecimal ventasMes,

@@ -1,5 +1,6 @@
 package com.posref.pos.model;
 
+import com.posref.pos.model.seguridad.Usuario;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -21,8 +22,6 @@ public class OrdenTaller {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-
-
     @Column(
             name = "folio",
             nullable = false,
@@ -31,19 +30,29 @@ public class OrdenTaller {
     )
     private String folio;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(
+            fetch = FetchType.LAZY,
+            optional = false
+    )
     @JoinColumn(
             name = "cliente_id",
             nullable = false
     )
     private Clientes cliente;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(
+            fetch = FetchType.LAZY,
+            optional = false
+    )
     @JoinColumn(
             name = "moto_cliente_id",
             nullable = false
     )
     private Motocicleta motocicleta;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tecnico_id")
+    private Usuario tecnico;
 
     @Column(
             name = "fecha_recepcion",
@@ -165,7 +174,8 @@ public class OrdenTaller {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
-    private List<OrdenTallerServicio> servicios = new ArrayList<>();
+    private List<OrdenTallerServicio> servicios =
+            new ArrayList<>();
 
     @Builder.Default
     @OneToMany(
@@ -173,14 +183,19 @@ public class OrdenTaller {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
-    private List<OrdenTallerProducto> productos = new ArrayList<>();
+    private List<OrdenTallerProducto> productos =
+            new ArrayList<>();
 
-    public void agregarServicio(OrdenTallerServicio detalle) {
+    public void agregarServicio(
+            OrdenTallerServicio detalle
+    ) {
         servicios.add(detalle);
         detalle.setOrdenTaller(this);
     }
 
-    public void agregarProducto(OrdenTallerProducto detalle) {
+    public void agregarProducto(
+            OrdenTallerProducto detalle
+    ) {
         productos.add(detalle);
         detalle.setOrdenTaller(this);
     }

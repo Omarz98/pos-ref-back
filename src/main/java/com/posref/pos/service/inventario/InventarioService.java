@@ -258,6 +258,8 @@ public class InventarioService implements IInventarioService{
 
         dto.setNombre(producto.getNombre());
 
+        dto.setDescripcion(producto.getDescripcion());
+
         dto.setPrecioCompra(
                 producto.getPrecioCompra()
         );

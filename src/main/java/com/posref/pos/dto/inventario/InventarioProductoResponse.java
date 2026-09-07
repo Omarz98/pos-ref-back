@@ -17,6 +17,8 @@ public class InventarioProductoResponse {
 
     private String nombre;
 
+    private String descripcion;
+
     private BigDecimal precioCompra;
 
     private BigDecimal precioVenta;

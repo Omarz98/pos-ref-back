@@ -202,13 +202,10 @@ public class OrdenTallerService
 
     @Override
     @Transactional(readOnly = true)
-    public List<OrdenTallerResponse>
-    historialMotocicleta(Long motoId) {
+    public List<OrdenTallerResponse> historialMotocicleta(Long motoId) {
 
         return ordenTallerRepository
-                .findByMotocicletaIdOrderByFechaRecepcionDesc(
-                        motoId
-                )
+                .findByMotocicleta_IdOrderByFechaRecepcionDesc(motoId)
                 .stream()
                 .map(this::convertirResponse)
                 .toList();
@@ -1454,20 +1451,13 @@ public class OrdenTallerService
         );
     }
 
-    public OrdenTallerResponse
-    convertirResponsePublico(
-            OrdenTaller orden
-    ) {
+    public OrdenTallerResponse convertirResponsePublico(OrdenTaller orden) {
         return convertirResponse(orden);
     }
 
-    private OrdenTallerResponse convertirResponse(
-            OrdenTaller orden
-    ) {
+    private OrdenTallerResponse convertirResponse(OrdenTaller orden) {
 
-        List<
-                OrdenTallerResponse.ServicioResponse
-                > servicios =
+        List<OrdenTallerResponse.ServicioResponse> servicios =
                 ordenTallerServicioRepository
                         .findByOrdenTallerId(
                                 orden.getId()
@@ -1520,9 +1510,7 @@ public class OrdenTallerService
                         )
                         .toList();
 
-        List<
-                OrdenTallerResponse.ProductoResponse
-                > productos =
+        List<OrdenTallerResponse.ProductoResponse> productos =
                 ordenTallerProductoRepository
                         .findByOrdenTallerId(
                                 orden.getId()
@@ -1578,7 +1566,7 @@ public class OrdenTallerService
 
         List<HistorialOrdenResponse> historial =
                 historialRepository
-                        .findByOrdenTallerIdOrderByFechaDesc(
+                        .findByOrdenTaller_IdOrderByFechaDesc(
                                 orden.getId()
                         )
                         .stream()

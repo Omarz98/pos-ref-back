@@ -63,4 +63,8 @@ public interface IOrdenTallerRepository
             @Param("estado") EstadoOrdenTrabajo estado,
             @Param("buscar") String buscar
     );
+
+    List<OrdenTaller> findByMotocicleta_IdOrderByFechaRecepcionDesc(
+            Long motocicletaId
+    );
 }

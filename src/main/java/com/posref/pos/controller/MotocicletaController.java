@@ -2,7 +2,11 @@ package com.posref.pos.controller;
 
 import com.posref.pos.dto.MotocicletaRequest;
 import com.posref.pos.dto.MotocicletaResponse;
+import com.posref.pos.dto.OrdenTallerResponse;
 import com.posref.pos.dto.ProductosDTO;
+import com.posref.pos.dto.taller.HistorialMotoDTO;
+import com.posref.pos.service.IOrdenTallerService;
+import com.posref.pos.service.taller.HistorialMotoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +23,8 @@ import java.util.List;
 public class MotocicletaController {
 
     private final IMotocicletaService motocicletaService;
+    private final HistorialMotoService service;
+    private final IOrdenTallerService ordenTallerService;
 
     @GetMapping
     public ResponseEntity<List<MotocicletaResponse>> traerMotocicletas(){
@@ -78,5 +84,18 @@ public class MotocicletaController {
         motocicletaService.desactivar(id);
 
         return ResponseEntity.noContent().build();
+    }
+
+//    @GetMapping("/{id}/historial")
+//    public List<HistorialMotoDTO> obtenerHistorial(
+//            @PathVariable Long id) {
+//
+//        return service.obtenerHistorial(id);
+//    }
+
+    @GetMapping("/{id}/historial")
+    public ResponseEntity<List<OrdenTallerResponse>> obtenerHistorial(@PathVariable Long id) {
+
+        return ResponseEntity.ok(ordenTallerService.historialMotocicleta(id));
     }
 }

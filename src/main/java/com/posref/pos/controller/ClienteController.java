@@ -75,4 +75,14 @@ public class ClienteController {
         );
     }
 
+    @PreAuthorize("hasAuthority('CLIENTE_VER')")
+    @GetMapping("/{id}")
+    public ResponseEntity<ClientesDTO> obtenerClientePorId(
+            @PathVariable Long id
+    ) {
+        ClientesDTO cliente = clientesService.obtenerClientePorId(id);
+
+        return ResponseEntity.ok(cliente);
+    }
+
 }

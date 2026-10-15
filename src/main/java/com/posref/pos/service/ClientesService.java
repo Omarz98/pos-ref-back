@@ -12,13 +12,17 @@ import com.posref.pos.repository.ClientesRepository;
 import com.posref.pos.repository.MotoModelosRepository;
 import com.posref.pos.repository.MotoVersionesRepository;
 import com.posref.pos.repository.MotocicletaRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+
 
 @Service
 public class ClientesService implements IClientesService {
@@ -175,5 +179,21 @@ public class ClientesService implements IClientesService {
                 .kilometraje(moto.getKilometrajeActual())
                 .activo(moto.getActivo())
                 .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ClientesDTO obtenerClientePorId(Long id) {
+
+        Clientes cliente = clienteRepo.findById(id)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "No existe el cliente con ID: " + id
+                        )
+                );
+
+        return Mapper.toDTO(clienteRepo.save(cliente));
+        //return convertirDTO(cliente);
     }
 }

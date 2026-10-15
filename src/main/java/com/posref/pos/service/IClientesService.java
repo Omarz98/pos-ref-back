@@ -15,4 +15,6 @@ public interface IClientesService {
     ClienteMotoResponse  agregarMoto( Long clienteId, ClienteMotoRequest request);
 
     List<ClienteMotoResponse> obtenerMotos(Long clienteId);
+
+    ClientesDTO obtenerClientePorId(Long id);
 }

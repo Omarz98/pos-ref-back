@@ -72,11 +72,44 @@ public class InventarioService implements IInventarioService{
                 .collect(Collectors.toList());
     }
 
+
     @Override
     @Transactional
     public InventarioMovimientoResponse registrarMovimiento(
             MovimientoInventarioRequest request) {
 
+        // 1. VALIDAR REQUEST
+        if (request == null
+                || request.getProductoId() == null
+                || request.getTipo() == null
+                || request.getCantidad() == null) {
+            throw new IllegalArgumentException(
+                    "Producto, tipo y cantidad son obligatorios"
+            );
+        }
+
+        // 2. NO PERMITIR VENTAS MANUALES
+        if (request.getTipo() == TipoMovimientoInventario.VENTA) {
+            throw new IllegalArgumentException(
+                    "Los movimientos de VENTA deben registrarse desde Punto de Venta"
+            );
+        }
+
+        BigDecimal cantidad = request.getCantidad();
+
+        if (cantidad.signum() < 0) {
+            throw new IllegalArgumentException(
+                    "La cantidad no puede ser negativa"
+            );
+        }
+
+        if (cantidad.stripTrailingZeros().scale() > 0) {
+            throw new IllegalArgumentException(
+                    "La cantidad debe ser un número entero"
+            );
+        }
+
+        // 3. OBTENER PRODUCTO
         Productos producto = productoRepository
                 .findById(request.getProductoId())
                 .orElseThrow(() ->
@@ -93,81 +126,92 @@ public class InventarioService implements IInventarioService{
 
         BigDecimal stockNuevo;
 
+        // 4. CALCULAR MOVIMIENTO
         switch (request.getTipo()) {
 
+            // INCREMENTAR STOCK
             case ENTRADA:
-                stockNuevo = stockAnterior.add(
-                        request.getCantidad()
-                );
+            case AJUSTE_ENTRADA:
+            case COMPRA:
+            case DEVOLUCION_CLIENTE:
+
+                validarCantidadPositiva(cantidad);
+
+                stockNuevo = stockAnterior.add(cantidad);
                 break;
 
+            // DISMINUIR STOCK
             case SALIDA:
+            case AJUSTE_SALIDA:
+            case TALLER:
+            case DEVOLUCION_PROVEEDOR:
 
-                if (stockAnterior.compareTo(
-                        request.getCantidad()
-                ) < 0) {
+                validarCantidadPositiva(cantidad);
 
+                if (stockAnterior.compareTo(cantidad) < 0) {
                     throw new IllegalArgumentException(
-                            "Stock insuficiente. Stock actual: "
-                                    + stockAnterior
+                            "Stock insuficiente para "
+                                    + request.getTipo()
+                                    + ". Disponible: " + stockAnterior
+                                    + ", solicitado: " + cantidad
                     );
                 }
 
-                stockNuevo = stockAnterior.subtract(
-                        request.getCantidad()
-                );
+                stockNuevo = stockAnterior.subtract(cantidad);
+                break;
 
+            // INVENTARIO INICIAL
+            case INVENTARIO_INICIAL:
+
+                if (producto.getStockActual() != null) {
+                    throw new IllegalArgumentException(
+                            "El producto ya tiene inventario inicial"
+                    );
+                }
+
+                stockNuevo = cantidad;
                 break;
 
             default:
                 throw new IllegalArgumentException(
-                        "Tipo de movimiento no válido"
+                        "Tipo de movimiento no permitido: "
+                                + request.getTipo()
                 );
         }
 
-        producto.setStockActual(stockNuevo.intValue());
+        // 5. ACTUALIZAR STOCK
+        int stockFinal = stockNuevo.intValueExact();
 
+        producto.setStockActual(stockFinal);
         productoRepository.save(producto);
 
-        InventarioMovimiento movimiento = new InventarioMovimiento();
+        // 6. REGISTRAR HISTORIAL
+        InventarioMovimiento movimiento =
+                new InventarioMovimiento();
 
         movimiento.setProducto(producto);
-
-        movimiento.setTipo(
-                request.getTipo()
-        );
-
-        movimiento.setCantidad(
-                request.getCantidad()
-        );
-
-        movimiento.setStockAnterior(
-                stockAnterior
-        );
-
-        movimiento.setStockNuevo(
-                stockNuevo
-        );
-
-        movimiento.setMotivo(
-                request.getMotivo()
-        );
-
-        movimiento.setReferenciaTipo(
-                request.getReferenciaTipo()
-        );
-
-        movimiento.setFecha(
-                LocalDateTime.now()
-        );
+        movimiento.setTipo(request.getTipo());
+        movimiento.setCantidad(cantidad);
+        movimiento.setStockAnterior(stockAnterior);
+        movimiento.setStockNuevo(stockNuevo);
+        movimiento.setMotivo(request.getMotivo());
+        movimiento.setReferenciaTipo(request.getReferenciaTipo());
+        movimiento.setFecha(LocalDateTime.now());
 
         InventarioMovimiento movimientoGuardado =
                 movimientoRepository.save(movimiento);
 
-        return convertirMovimientoResponse(
-                movimientoGuardado
-        );
+        return convertirMovimientoResponse(movimientoGuardado);
     }
+
+    private void validarCantidadPositiva(BigDecimal cantidad) {
+        if (cantidad.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException(
+                    "La cantidad debe ser mayor a cero"
+            );
+        }
+    }
+
 
     @Override
     public InventarioResumenResponse obtenerResumen() {

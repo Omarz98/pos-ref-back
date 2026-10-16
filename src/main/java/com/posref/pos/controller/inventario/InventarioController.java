@@ -4,16 +4,17 @@ import com.posref.pos.dto.inventario.InventarioMovimientoResponse;
 import com.posref.pos.dto.inventario.InventarioProductoResponse;
 import com.posref.pos.dto.inventario.InventarioResumenResponse;
 import com.posref.pos.dto.inventario.MovimientoInventarioRequest;
-import com.posref.pos.model.inventario.InventarioMovimiento;
 import com.posref.pos.service.inventario.IInventarioService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/inventario")
-@CrossOrigin(origins = "*")
+@Validated
 public class InventarioController {
 
     private final IInventarioService inventarioService;
@@ -24,6 +25,8 @@ public class InventarioController {
         this.inventarioService = inventarioService;
     }
 
+    // Consultar inventario completo
+    @PreAuthorize("hasAuthority('INVENTARIO_VER')")
     @GetMapping
     public ResponseEntity<List<InventarioProductoResponse>>
     obtenerInventario() {
@@ -33,6 +36,8 @@ public class InventarioController {
         );
     }
 
+    // Consultar inventario de un producto
+    @PreAuthorize("hasAuthority('INVENTARIO_VER')")
     @GetMapping("/producto/{productoId}")
     public ResponseEntity<InventarioProductoResponse>
     obtenerProducto(
@@ -46,6 +51,8 @@ public class InventarioController {
         );
     }
 
+    // Consultar historial de movimientos
+    @PreAuthorize("hasAuthority('INVENTARIO_MOVIMIENTOS_VER')")
     @GetMapping("/movimientos/{productoId}")
     public ResponseEntity<List<InventarioMovimientoResponse>> obtenerMovimientos(
             @PathVariable Long productoId) {
@@ -55,6 +62,8 @@ public class InventarioController {
         );
     }
 
+    // Registrar entrada, salida o ajuste
+    @PreAuthorize("hasAuthority('INVENTARIO_MOVIMIENTO_CREAR')")
     @PostMapping("/movimientos")
     public ResponseEntity<InventarioMovimientoResponse> registrarMovimiento(
             @RequestBody MovimientoInventarioRequest request) {
@@ -65,6 +74,8 @@ public class InventarioController {
         return ResponseEntity.ok(movimiento);
     }
 
+    // Consultar resumen de inventario
+    @PreAuthorize("hasAuthority('INVENTARIO_VER')")
     @GetMapping("/resumen")
     public ResponseEntity<InventarioResumenResponse>
     obtenerResumen() {

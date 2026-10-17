@@ -4,6 +4,7 @@ import com.posref.pos.dto.taller.TallerDashboardResponse;
 import com.posref.pos.service.taller.TallerDashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -14,6 +15,7 @@ public class TallerDashboardController {
 
     private final TallerDashboardService service;
 
+    @PreAuthorize("hasAuthority('TALLER_DASHBOARD_VER')")
     @GetMapping("/dashboard")
     public ResponseEntity<TallerDashboardResponse>
     dashboard() {

@@ -29,7 +29,7 @@ public class TallerDashboardService {
             );
 
     @Transactional(readOnly = true)
-    public TallerDashboardResponse obtenerDashboard() {
+    public TallerDashboardResponse  obtenerDashboard() {
 
         LocalDateTime ahora = LocalDateTime.now();
         LocalDateTime hasta = ahora.plusDays(7);

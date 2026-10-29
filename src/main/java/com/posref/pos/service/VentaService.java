@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class VentaService implements IVentaService{
+public class VentaService implements IVentaService {
 
     private final VentaRepository ventaRepository;
 
@@ -315,9 +315,11 @@ public class VentaService implements IVentaService{
          * informada en la solicitud.
          */
         OrdenTaller orden = null;
+        BigDecimal anticipoAplicado = BigDecimal.ZERO;
 
         if (request.getOrdenServicioId() != null) {
 
+            // 1. Buscar la orden
             orden = ordenTallerRepository
                     .findById(request.getOrdenServicioId())
                     .orElseThrow(() ->
@@ -327,29 +329,63 @@ public class VentaService implements IVentaService{
                             )
                     );
 
+            // 2. Validar que no esté cancelada
             if (orden.getEstado() == EstadoOrdenTrabajo.CANCELADA) {
                 throw new RuntimeException(
                         "No se puede cobrar una orden cancelada"
                 );
             }
 
+            // 3. Validar que no esté pagada
             if (orden.getEstado() == EstadoOrdenTrabajo.PAGADA) {
                 throw new RuntimeException(
                         "La orden ya se encuentra pagada"
                 );
             }
 
-            /*
-             * Validar que no exista una venta previa para la orden.
-             */
+            // 4. Validar que no tenga una venta registrada
             if (ventaRepository.existsByOrdenTallerId(orden.getId())) {
                 throw new RuntimeException(
                         "La orden ya tiene una venta registrada"
                 );
             }
 
+            // 5. Recuperar el anticipo de la orden
+            anticipoAplicado = orden.getAnticipo() != null
+                    ? orden.getAnticipo()
+                    : BigDecimal.ZERO;
+
+            // 6. Validar que el anticipo no sea negativo
+            if (anticipoAplicado.compareTo(BigDecimal.ZERO) < 0) {
+                throw new IllegalArgumentException(
+                        "El anticipo de la orden no puede ser negativo"
+                );
+            }
+
+            // 7. Validar que no supere el total
+            if (anticipoAplicado.compareTo(venta.getTotal()) > 0) {
+                throw new IllegalArgumentException(
+                        "El anticipo no puede superar el total de la venta"
+                );
+            }
+
+            // 8. Validar que el total coincida con la orden
+            if (orden.getTotal() == null ||
+                    orden.getTotal().compareTo(venta.getTotal()) != 0) {
+
+                throw new IllegalArgumentException(
+                        "El total de la venta no coincide con "
+                                + "el total de la orden de taller"
+                );
+            }
+
+            // 9. Relacionar la orden con la venta
             venta.setOrdenTaller(orden);
         }
+
+            // 10. Guardar el anticipo reconocido
+        venta.setAnticipoAplicado(anticipoAplicado);
+
 
         /*
          * 7. Construir los detalles y descontar inventario.
@@ -503,13 +539,18 @@ public class VentaService implements IVentaService{
         /*
          * 9. Calcular saldo pendiente.
          */
-        BigDecimal saldoCalculado = venta.getTotal()
-                .subtract(totalPagado);
 
-        BigDecimal saldoPendiente =
-                saldoCalculado.compareTo(BigDecimal.ZERO) > 0
-                        ? saldoCalculado
-                        : BigDecimal.ZERO;
+        //Se actualiza para calcular el saldo del anticipo y saldo total
+        BigDecimal totalCubierto = anticipoAplicado.add(totalPagado);
+
+        if (totalCubierto.compareTo(venta.getTotal()) > 0) {
+            throw new IllegalArgumentException(
+                    "El anticipo y los pagos superan el total de la venta"
+            );
+        }
+
+        BigDecimal saldoPendiente = venta.getTotal()
+                .subtract(totalCubierto);
 
         venta.setSaldoPendiente(saldoPendiente);
 
@@ -571,7 +612,6 @@ public class VentaService implements IVentaService{
          */
         return Mapper.convertirVentaResponse(ventaGuardada);
     }
-
 
 
     @Override
@@ -1099,7 +1139,7 @@ public class VentaService implements IVentaService{
 
         for (PagoRequest pago : request.getPagos()) {
 
-            if (pago.getMetodo() == null ) {
+            if (pago.getMetodo() == null) {
 
                 throw new IllegalArgumentException(
                         "El método de pago es obligatorio"
@@ -1137,7 +1177,9 @@ public class VentaService implements IVentaService{
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+
     private BigDecimal obtenerSaldoActual(Ventas venta) {
+
         if (venta.getSaldoPendiente() != null) {
             return venta.getSaldoPendiente();
         }
@@ -1147,6 +1189,32 @@ public class VentaService implements IVentaService{
                         ? venta.getTotalPagado()
                         : BigDecimal.ZERO;
 
-        return venta.getTotal().subtract(totalPagado);
+        BigDecimal anticipoAplicado =
+                venta.getAnticipoAplicado() != null
+                        ? venta.getAnticipoAplicado()
+                        : BigDecimal.ZERO;
+
+        BigDecimal saldo = venta.getTotal()
+                .subtract(anticipoAplicado)
+                .subtract(totalPagado);
+
+        return saldo.max(BigDecimal.ZERO);
     }
+
+
+
+    @Transactional(readOnly = true)
+    public VentaResponse obtenerDetalleVenta(Long id) {
+
+        Ventas venta = ventaRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Venta no encontrada con id: " + id
+                        )
+                );
+
+        return Mapper.convertirVentaResponse(venta);
+    }
+
 }

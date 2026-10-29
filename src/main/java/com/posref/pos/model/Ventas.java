@@ -85,4 +85,15 @@ public class Ventas {
     @JoinColumn(name = "orden_taller_id", unique = true)
     private OrdenTaller ordenTaller;
 
+
+    @Builder.Default
+    @Column(
+            name = "anticipo_aplicado",
+            nullable = false,
+            precision = 12,
+            scale = 2
+    )
+    private BigDecimal anticipoAplicado = BigDecimal.ZERO;
+
+
 }

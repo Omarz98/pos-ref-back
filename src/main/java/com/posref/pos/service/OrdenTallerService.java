@@ -11,9 +11,14 @@ import com.posref.pos.model.taller.OrdenTallerHistorial;
 import com.posref.pos.repository.*;
 import com.posref.pos.repository.seguridad.UsuarioRepository;
 import com.posref.pos.repository.taller.IOrdenTallerHistorialRepository;
+import com.posref.pos.service.caja.CajaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.core.context.SecurityContextHolder;
+import com.posref.pos.dto.PagoAnticipoRequest;
+import com.posref.pos.service.caja.CajaService;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -40,6 +45,7 @@ public class OrdenTallerService
     private final ProductosRepository productoRepository;
     private final UsuarioRepository usuarioRepository;
     private final VentaRepository ventaRepository;
+    private final CajaService cajaService;
 
     @Override
     @Transactional
@@ -121,10 +127,36 @@ public class OrdenTallerService
 
         calcularTotales(orden);
         validarAnticipo(orden);
+        validarPagosAnticipo(orden, request.getPagosAnticipo());
+
 
         OrdenTaller guardada =
                 ordenTallerRepository.save(orden);
 
+// Registrar el anticipo en Caja
+        if (guardada.getAnticipo().signum() > 0) {
+
+            String username = SecurityContextHolder
+                    .getContext()
+                    .getAuthentication()
+                    .getName();
+
+            Usuario usuario = usuarioRepository
+                    .findByUsername(username)
+                    .orElseThrow(() ->
+                            new IllegalArgumentException(
+                                    "Usuario autenticado no encontrado"
+                            )
+                    );
+
+            cajaService.registrarAnticipoTaller(
+                    usuario.getId(),
+                    guardada,
+                    request.getPagosAnticipo()
+            );
+        }
+
+// Registrar historial de la orden
         registrarHistorial(
                 guardada,
                 null,
@@ -1136,22 +1168,30 @@ public class OrdenTallerService
         }
     }
 
-    private void validarAnticipo(
-            OrdenTaller orden
-    ) {
 
-        if (
-                orden.getAnticipo()
-                        .compareTo(
-                                orden.getTotal()
-                        ) > 0
-        ) {
+    private void validarAnticipo(OrdenTaller orden) {
+
+        BigDecimal anticipo = orden.getAnticipo() != null
+                ? orden.getAnticipo()
+                : BigDecimal.ZERO;
+
+        BigDecimal total = orden.getTotal() != null
+                ? orden.getTotal()
+                : BigDecimal.ZERO;
+
+        if (anticipo.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException(
-                    "El anticipo no puede ser mayor "
-                            + "al total de la orden"
+                    "El anticipo no puede ser negativo"
+            );
+        }
+
+        if (anticipo.compareTo(total) > 0) {
+            throw new IllegalArgumentException(
+                    "El anticipo no puede ser mayor al total de la orden"
             );
         }
     }
+
 
     private void validarOrdenEditable(
             OrdenTaller orden
@@ -1844,4 +1884,60 @@ public class OrdenTallerService
                 )
                 .trim();
     }
+
+
+    private void validarPagosAnticipo(
+            OrdenTaller orden,
+            List<PagoAnticipoRequest> pagos
+    ) {
+
+        BigDecimal anticipo = orden.getAnticipo() != null
+                ? orden.getAnticipo()
+                : BigDecimal.ZERO;
+
+        if (anticipo.signum() == 0) {
+            if (pagos != null && !pagos.isEmpty()) {
+                throw new IllegalArgumentException(
+                        "No debe enviar pagos si el anticipo es cero"
+                );
+            }
+            return;
+        }
+
+        if (pagos == null || pagos.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Debe indicar los pagos del anticipo"
+            );
+        }
+
+        BigDecimal suma = BigDecimal.ZERO;
+
+        for (PagoAnticipoRequest pago : pagos) {
+
+            if (pago == null || pago.metodoPago() == null) {
+                throw new IllegalArgumentException(
+                        "Debe indicar el método de pago del anticipo"
+                );
+            }
+
+            if (pago.monto() == null ||
+                    pago.monto().signum() <= 0 ||
+                    pago.monto().scale() > 2) {
+                throw new IllegalArgumentException(
+                        "Importe de anticipo inválido"
+                );
+            }
+
+            suma = suma.add(pago.monto());
+        }
+
+        if (suma.compareTo(anticipo) != 0) {
+            throw new IllegalArgumentException(
+                    "La suma de pagos (" + suma +
+                            ") debe coincidir con el anticipo (" +
+                            anticipo + ")"
+            );
+        }
+    }
+
 }

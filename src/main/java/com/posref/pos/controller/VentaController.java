@@ -61,5 +61,17 @@ public class VentaController {
                 ordenServicioService.obtenerOrdenesPendientesDePago()
         );
     }
+
+
+    @PreAuthorize("hasAuthority('VENTA_VER')")
+    @GetMapping("/{id}")
+    public ResponseEntity<VentaResponse> obtenerVenta(
+            @PathVariable Long id
+    ) {
+        return ResponseEntity.ok(
+                ventaService.obtenerDetalleVenta(id)
+        );
+    }
+
 }
 

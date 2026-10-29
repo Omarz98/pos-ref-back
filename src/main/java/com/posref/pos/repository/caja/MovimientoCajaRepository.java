@@ -29,4 +29,12 @@ public interface MovimientoCajaRepository
             @Param("tipo") TipoMovimientoCaja tipo,
             @Param("metodo") MetodoMovimientoCaja metodo
     );
+
+    boolean existsByReferenciaOperacion(String referenciaOperacion);
+
+    boolean existsByOrdenTaller_IdAndReferenciaOperacionStartingWith(
+            Long ordenTallerId,
+            String prefijo
+    );
+
 }

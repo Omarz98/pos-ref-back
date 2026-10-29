@@ -4,6 +4,7 @@ import com.posref.pos.dto.*;
 import com.posref.pos.model.*;
 import org.hibernate.mapping.List;
 
+import java.math.BigDecimal;
 import java.util.stream.Collectors;
 
 public class Mapper {
@@ -145,8 +146,10 @@ public class Mapper {
                 .build();
     }
 
+
     public static VentaResponse convertirVentaResponse(Ventas venta) {
 
+        // 1. Convertir detalles de la venta
         java.util.List<DetalleResponse> items = venta.getDetalles()
                 .stream()
                 .map(detalle -> DetalleResponse.builder()
@@ -160,6 +163,7 @@ public class Mapper {
                         .build())
                 .collect(Collectors.toList());
 
+        // 2. Convertir pagos de la venta
         java.util.List<PagoResponse> pagos = venta.getPagos()
                 .stream()
                 .map(pago -> PagoResponse.builder()
@@ -171,10 +175,19 @@ public class Mapper {
                         .build())
                 .collect(Collectors.toList());
 
+        // 3. Recuperar anticipo aplicado
+        BigDecimal anticipoAplicado =
+                venta.getAnticipoAplicado() != null
+                        ? venta.getAnticipoAplicado()
+                        : BigDecimal.ZERO;
+
+        // 4. Construir respuesta
         return VentaResponse.builder()
                 .id(venta.getId())
                 .fecha(venta.getFecha())
                 .estado(String.valueOf(venta.getEstado()))
+
+                // Cliente
                 .clienteId(
                         venta.getCliente() != null
                                 ? venta.getCliente().getId()
@@ -185,15 +198,28 @@ public class Mapper {
                                 ? venta.getCliente().getNombre()
                                 : null
                 )
+
+                // Importes
                 .subtotal(venta.getSubtotal())
                 .iva(venta.getIva())
                 .total(venta.getTotal())
+
+                // Anticipo recibido en Taller
+                .anticipoAplicado(anticipoAplicado)
+
+                // Pagos nuevos registrados en POS
                 .totalPagado(venta.getTotalPagado())
+
+                // Saldo después de anticipo y pagos
                 .saldoPendiente(venta.getSaldoPendiente())
+
+                // Detalles y pagos
                 .items(items)
                 .pagos(pagos)
+
                 .build();
     }
+
 
     private VentaResponse convertirAResponse(Ventas venta) {
 

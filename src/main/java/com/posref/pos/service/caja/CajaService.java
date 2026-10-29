@@ -2,6 +2,8 @@ package com.posref.pos.service.caja;
 
 import com.posref.pos.dto.VentaRequest;
 import com.posref.pos.dto.VentaResponse;
+import com.posref.pos.model.OrdenTaller;
+import org.springframework.dao.DataIntegrityViolationException;
 import com.posref.pos.dto.caja.*;
 import com.posref.pos.model.MetodoPago;
 import com.posref.pos.model.VentaPago;
@@ -14,6 +16,9 @@ import com.posref.pos.repository.seguridad.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.posref.pos.dto.PagoAnticipoRequest;
+import com.posref.pos.model.OrdenTaller;
+import java.util.List;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -383,5 +388,107 @@ public class CajaService implements ICajaService {
                     MetodoMovimientoCaja.TRANSFERENCIA;
         };
     }
+
+
+
+    @Transactional
+    public void registrarAnticipoTaller(
+            Long usuarioId,
+            OrdenTaller orden,
+            List<PagoAnticipoRequest> pagosAnticipo
+    ) {
+
+        if (orden == null || orden.getId() == null) {
+            throw new IllegalArgumentException(
+                    "La orden de taller debe estar registrada"
+            );
+        }
+
+        if (pagosAnticipo == null || pagosAnticipo.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Debe proporcionar al menos un pago del anticipo"
+            );
+        }
+
+        String prefijo = "ANTICIPO-TALLER-" + orden.getId() + "-";
+
+        // Impedir un segundo registro del anticipo inicial
+        if (movimientoCajaRepository
+                .existsByOrdenTaller_IdAndReferenciaOperacionStartingWith(
+                        orden.getId(),
+                        prefijo
+                )) {
+
+            throw new IllegalStateException(
+                    "Esta orden ya tiene un anticipo registrado"
+            );
+        }
+
+        BigDecimal totalAnticipo = BigDecimal.ZERO;
+
+        // Validar todos los pagos antes de registrarlos
+        for (PagoAnticipoRequest pago : pagosAnticipo) {
+
+            if (pago == null || pago.metodoPago() == null) {
+                throw new IllegalArgumentException(
+                        "Todos los pagos deben tener método de pago"
+                );
+            }
+
+            if (pago.monto() == null ||
+                    pago.monto().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new IllegalArgumentException(
+                        "Los importes del anticipo deben ser mayores a cero"
+                );
+            }
+
+            if (pago.monto().scale() > 2) {
+                throw new IllegalArgumentException(
+                        "Los importes no pueden tener más de dos decimales"
+                );
+            }
+
+            totalAnticipo = totalAnticipo.add(pago.monto());
+        }
+
+        if (orden.getAnticipo() == null ||
+                totalAnticipo.compareTo(orden.getAnticipo()) != 0) {
+
+            throw new IllegalArgumentException(
+                    "La suma de los pagos no coincide con el anticipo"
+            );
+        }
+
+        CajaSesion sesion = buscarCajaAbierta(usuarioId);
+
+        int numeroPago = 1;
+
+        for (PagoAnticipoRequest pago : pagosAnticipo) {
+
+            MovimientoCaja movimiento = MovimientoCaja.builder()
+                    .cajaSesion(sesion)
+                    .ordenTaller(orden)
+                    .referenciaOperacion(prefijo + numeroPago)
+                    .tipo(TipoMovimientoCaja.ENTRADA)
+                    .metodo(convertirMetodoPago(pago.metodoPago()))
+                    .monto(pago.monto())
+                    .concepto(
+                            "Anticipo de taller - " + orden.getFolio()
+                    )
+                    .fecha(LocalDateTime.now())
+                    .build();
+
+            movimientoCajaRepository.save(movimiento);
+
+            numeroPago++;
+        }
+
+        // Ejecutar inserciones y restricciones de BD
+        movimientoCajaRepository.flush();
+
+        actualizarEfectivoEsperado(sesion);
+    }
+
+
 
 }

@@ -1,6 +1,7 @@
 package com.posref.pos.dto;
 
 import com.posref.pos.model.EstadoOrdenTrabajo;
+import com.posref.pos.model.MetodoPago;
 import com.posref.pos.model.NivelCombustible;
 import com.posref.pos.model.PrioridadOrdenTaller;
 import jakarta.validation.Valid;
@@ -73,5 +74,7 @@ public class OrdenTallerRequest {
     @Valid
     @Builder.Default
     private List<OrdenProductoRequest> productos = new ArrayList<>();
+
+    private List<PagoAnticipoRequest> pagosAnticipo;
 
 }

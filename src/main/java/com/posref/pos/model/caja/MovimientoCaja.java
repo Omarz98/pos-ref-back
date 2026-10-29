@@ -1,6 +1,7 @@
 package com.posref.pos.model.caja;
 
 import com.posref.pos.model.Ventas;
+import com.posref.pos.model.OrdenTaller;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -28,6 +29,10 @@ public class MovimientoCaja {
     @JoinColumn(name = "venta_id")
     private Ventas venta;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "orden_taller_id")
+    private OrdenTaller ordenTaller;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private TipoMovimientoCaja tipo;
@@ -44,5 +49,13 @@ public class MovimientoCaja {
 
     @Column(nullable = false)
     private LocalDateTime fecha;
+
+
+    @Column(
+            name = "referencia_operacion",
+            unique = true,
+            length = 100
+    )
+    private String referenciaOperacion;
 
 }

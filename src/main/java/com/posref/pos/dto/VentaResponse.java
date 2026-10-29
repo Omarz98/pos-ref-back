@@ -25,4 +25,5 @@ public class VentaResponse {
 
     private List<DetalleResponse> items;
     private List<PagoResponse> pagos;
+    private BigDecimal anticipoAplicado;
 }

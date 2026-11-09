@@ -48,21 +48,28 @@ public class SecurityConfig {
                         )
                 )
 
+
                 .authorizeHttpRequests(auth -> auth
 
+                        // Endpoints públicos
                         .requestMatchers(
                                 "/api/auth/**",
+                                "/actuator/health",
+                                "/actuator/health/**",
                                 "/error"
                         ).permitAll()
 
+                        // Endpoints exclusivos del administrador
                         .requestMatchers(
                                 "/api/usuarios/**",
                                 "/api/roles/**",
                                 "/api/permisos/**"
                         ).hasRole("ADMINISTRADOR")
 
+                        // Los demás endpoints requieren autenticación
                         .anyRequest().authenticated()
                 )
+
 
                 .authenticationProvider(
                         authenticationProvider()

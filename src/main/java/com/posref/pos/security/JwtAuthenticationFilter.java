@@ -1,10 +1,13 @@
+
 package com.posref.pos.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,10 +18,22 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
-public class JwtAuthenticationFilter extends OncePerRequestFilter{
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UsuarioDetailsService usuarioDetailsService;
+
+    /**
+     * Excluir los endpoints de salud del procesamiento JWT.
+     */
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+
+        String path = request.getServletPath();
+
+        return path.equals("/actuator/health")
+                || path.startsWith("/actuator/health/");
+    }
 
     @Override
     protected void doFilterInternal(
@@ -29,6 +44,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
 
         String authorization = request.getHeader("Authorization");
 
+        // Si no existe un token Bearer, continuar
         if (authorization == null
                 || !authorization.startsWith("Bearer ")) {
 
@@ -67,10 +83,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
             }
 
         } catch (Exception exception) {
+
             SecurityContextHolder.clearContext();
         }
 
         filterChain.doFilter(request, response);
     }
-
 }

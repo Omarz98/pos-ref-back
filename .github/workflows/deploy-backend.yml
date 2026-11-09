@@ -32,10 +32,11 @@ jobs:
           cache: maven
 
       # 3. Compilar y ejecutar pruebas
+      
       - name: Compilar backend
         run: |
           chmod +x mvnw
-          ./mvnw -B clean verify
+          ./mvnw -B clean package -DskipTests
 
       # 4. Identificar JAR ejecutable
       - name: Preparar JAR

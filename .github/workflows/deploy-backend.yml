@@ -1,0 +1,133 @@
+
+name: POSREF - Deploy Backend
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: posref-backend-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Compilar y desplegar Spring Boot
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 20
+
+    steps:
+      # 1. Descargar codigo del repositorio
+      - name: Obtener codigo
+        uses: actions/checkout@v4
+
+      # 2. Configurar Java 21
+      - name: Configurar Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      # 3. Compilar y ejecutar pruebas
+      - name: Compilar backend
+        run: |
+          chmod +x mvnw
+          ./mvnw -B clean verify
+
+      # 4. Identificar JAR ejecutable
+      - name: Preparar JAR
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p artifact
+
+          mapfile -t JARS < <(
+            find target -maxdepth 1 \
+              -type f \
+              -name '*.jar' \
+              ! -name '*.original' \
+              ! -name '*-sources.jar' \
+              ! -name '*-javadoc.jar'
+          )
+
+          if [ "${#JARS[@]}" -ne 1 ]; then
+            echo "ERROR: Se esperaba exactamente un JAR."
+            printf '%s\n' "${JARS[@]}"
+            exit 1
+          fi
+
+          cp "${JARS[0]}" artifact/posref.jar
+
+          echo "JAR preparado:"
+          ls -lh artifact/posref.jar
+
+      # 5. Configurar conexion SSH
+      - name: Configurar SSH
+        shell: bash
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+          chmod 600 ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/known_hosts
+
+      # 6. Verificar conexion con Oracle
+      - name: Verificar conexion Oracle
+        env:
+          HOST: ${{ secrets.VPS_HOST }}
+          USER: ${{ secrets.VPS_USER }}
+        run: |
+          ssh \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            -o ConnectTimeout=15 \
+            "$USER@$HOST" \
+            "echo 'Conexion SSH exitosa'"
+
+      # 7. Transferir JAR a directorio temporal
+      - name: Transferir JAR
+        env:
+          HOST: ${{ secrets.VPS_HOST }}
+          USER: ${{ secrets.VPS_USER }}
+        run: |
+          scp \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            artifact/posref.jar \
+            "$USER@$HOST:/opt/posref/deploy/backend/posref.jar"
+
+      # 8. Ejecutar script de despliegue
+      - name: Publicar backend
+        env:
+          HOST: ${{ secrets.VPS_HOST }}
+          USER: ${{ secrets.VPS_USER }}
+        run: |
+          ssh \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            "$USER@$HOST" \
+            "/opt/posref/deploy/backend/deploy.sh"
+
+      # 9. Verificacion final
+      - name: Verificar contenedor
+        env:
+          HOST: ${{ secrets.VPS_HOST }}
+          USER: ${{ secrets.VPS_USER }}
+        run: |
+          ssh \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            "$USER@$HOST" \
+            "docker inspect -f '{{.State.Running}}' posref-backend | grep -qx true"

@@ -1,3 +1,4 @@
+
 package com.posref.pos.config;
 
 import com.posref.pos.model.seguridad.Rol;
@@ -6,6 +7,7 @@ import com.posref.pos.repository.seguridad.RolRepository;
 import com.posref.pos.repository.seguridad.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +15,11 @@ import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(
+        name = "posref.admin.bootstrap.enabled",
+        havingValue = "true",
+        matchIfMissing = true
+)
 public class InicializarAdministrador implements CommandLineRunner {
 
     private final UsuarioRepository usuarioRepository;
@@ -26,30 +33,25 @@ public class InicializarAdministrador implements CommandLineRunner {
             return;
         }
 
-        Rol rolAdministrador =
-                rolRepository
-                        .findByNombre("ADMINISTRADOR")
-                        .orElseThrow(() ->
-                                new RuntimeException(
-                                        "No existe el rol ADMINISTRADOR"
-                                )
-                        );
-
-        Usuario administrador =
-                Usuario.builder()
-                        .nombre("Administrador")
-                        .username("admin")
-                        .email("admin@derians.com")
-                        .password(
-                                passwordEncoder.encode(
-                                        "Admin123"
-                                )
+        Rol rolAdministrador = rolRepository
+                .findByNombre("ADMINISTRADOR")
+                .orElseThrow(() ->
+                        new IllegalStateException(
+                                "No existe el rol ADMINISTRADOR"
                         )
-                        .activo(true)
-                        .roles(Set.of(rolAdministrador))
-                        .build();
+                );
+
+        Usuario administrador = Usuario.builder()
+                .nombre("Administrador")
+                .username("admin")
+                .email("admin@derians.com")
+                .password(
+                        passwordEncoder.encode("Admin123")
+                )
+                .activo(true)
+                .roles(Set.of(rolAdministrador))
+                .build();
 
         usuarioRepository.save(administrador);
     }
-
 }

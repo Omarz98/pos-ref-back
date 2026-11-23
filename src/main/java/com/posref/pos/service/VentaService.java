@@ -383,7 +383,7 @@ public class VentaService implements IVentaService {
             venta.setOrdenTaller(orden);
         }
 
-            // 10. Guardar el anticipo reconocido
+        // 10. Guardar el anticipo reconocido
         venta.setAnticipoAplicado(anticipoAplicado);
 
 
@@ -497,40 +497,94 @@ public class VentaService implements IVentaService {
 
         venta.setDetalles(detalles);
 
-        /*
-         * 8. Construir los pagos.
-         */
-        List<VentaPago> pagos = new ArrayList<>();
-        BigDecimal totalPagado = BigDecimal.ZERO;
+        // =====================================================
+// 8. CONSTRUIR PAGOS Y CALCULAR CAMBIO
+// =====================================================
 
+        List<VentaPago> pagos = new ArrayList<>();
+
+        BigDecimal totalRecibido = BigDecimal.ZERO;
+        BigDecimal efectivoRecibido = BigDecimal.ZERO;
+
+// Validar pagos y sumar importes recibidos
         for (PagoRequest pagoDto : request.getPagos()) {
 
             if (pagoDto.getMetodo() == null) {
-                throw new RuntimeException(
+                throw new IllegalArgumentException(
                         "El método de pago es obligatorio"
                 );
             }
 
-            if (pagoDto.getMonto() == null
-                    || pagoDto.getMonto().compareTo(BigDecimal.ZERO) <= 0) {
+            if (pagoDto.getMonto() == null ||
+                    pagoDto.getMonto().compareTo(BigDecimal.ZERO) <= 0) {
 
-                throw new RuntimeException(
+                throw new IllegalArgumentException(
                         "El monto del pago debe ser mayor a cero"
                 );
             }
 
-            VentaPago pago = new VentaPago();
+            validarMetodoPago(pagoDto.getMetodo().name());
 
-            pago.setVenta(venta);
-            pago.setMetodo(pagoDto.getMetodo());
-            pago.setMonto(pagoDto.getMonto());
-            pago.setFecha(venta.getFecha());
-
-            pagos.add(pago);
-
-            totalPagado = totalPagado.add(
+            totalRecibido = totalRecibido.add(
                     pagoDto.getMonto()
             );
+
+            if (pagoDto.getMetodo() == MetodoPago.EFECTIVO) {
+                efectivoRecibido = efectivoRecibido.add(
+                        pagoDto.getMonto()
+                );
+            }
+        }
+
+// Descontar anticipo previamente aplicado
+        BigDecimal saldoPorCobrar = venta.getTotal()
+                .subtract(anticipoAplicado);
+
+// Calcular cambio
+        BigDecimal cambio = totalRecibido
+                .subtract(saldoPorCobrar)
+                .max(BigDecimal.ZERO);
+
+// El cambio solamente puede salir del efectivo
+        if (cambio.compareTo(efectivoRecibido) > 0) {
+            throw new IllegalArgumentException(
+                    "Solo se permite entregar cambio en efectivo"
+            );
+        }
+
+// Construir pagos netos
+        BigDecimal cambioPendiente = cambio;
+        BigDecimal totalPagado = BigDecimal.ZERO;
+
+        for (PagoRequest pagoDto : request.getPagos()) {
+
+            BigDecimal montoPago = pagoDto.getMonto();
+
+            if (pagoDto.getMetodo() == MetodoPago.EFECTIVO
+                    && cambioPendiente.compareTo(BigDecimal.ZERO) > 0) {
+
+                BigDecimal descuentoCambio =
+                        montoPago.min(cambioPendiente);
+
+                montoPago = montoPago.subtract(descuentoCambio);
+
+                cambioPendiente =
+                        cambioPendiente.subtract(descuentoCambio);
+            }
+
+            if (montoPago.compareTo(BigDecimal.ZERO) > 0) {
+
+                VentaPago pago = VentaPago.builder()
+                        .venta(venta)
+                        .metodo(pagoDto.getMetodo())
+                        .monto(montoPago)
+                        .fecha(venta.getFecha())
+                        .build();
+
+                pagos.add(pago);
+
+                totalPagado = totalPagado.add(montoPago);
+            }
         }
 
         venta.setPagos(pagos);
@@ -588,10 +642,7 @@ public class VentaService implements IVentaService {
          * Cuando el total pagado supera el total de la venta,
          * la diferencia corresponde al cambio que se devuelve.
          */
-        BigDecimal cambio =
-                totalPagado.compareTo(venta.getTotal()) > 0
-                        ? totalPagado.subtract(venta.getTotal())
-                        : BigDecimal.ZERO;
+
 
         /*
          * 13. Registrar los pagos como movimientos de caja.
@@ -603,7 +654,7 @@ public class VentaService implements IVentaService {
                 usuario.getId(),
                 ventaGuardada,
                 ventaGuardada.getPagos(),
-                cambio
+                BigDecimal.ZERO
         );
 
         /*
@@ -1200,7 +1251,6 @@ public class VentaService implements IVentaService {
 
         return saldo.max(BigDecimal.ZERO);
     }
-
 
 
     @Transactional(readOnly = true)

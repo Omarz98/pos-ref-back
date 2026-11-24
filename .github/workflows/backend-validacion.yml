@@ -1,0 +1,113 @@
+name: POSREF - Validacion Backend
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: posref-backend-validacion
+  cancel-in-progress: false
+
+jobs:
+  validacion:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Compilar backend
+        run: |
+          chmod +x mvnw
+          ./mvnw -B clean package -DskipTests
+
+      - name: Preparar JAR
+        run: |
+          mkdir -p artifact
+
+          cp target/pos-0.0.1-SNAPSHOT.jar artifact/posref.jar
+
+          ls -lh artifact/posref.jar
+          sha256sum artifact/posref.jar
+
+      - name: Configurar SSH
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+          chmod 600 ~/.ssh/id_ed25519
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Validar conexion SSH
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          ssh -i ~/.ssh/id_ed25519 \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            -o ConnectTimeout=15 \
+            "$VPS_USER@$VPS_HOST" \
+            "echo CONEXION_SSH_OK"
+
+      - name: Preparar directorio de validacion
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          ssh -i ~/.ssh/id_ed25519 \
+            -o StrictHostKeyChecking=yes \
+            "$VPS_USER@$VPS_HOST" \
+            "mkdir -p /opt/posref/validacion/backend /opt/posref/validacion/logs"
+
+      - name: Transferir JAR de validacion
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          scp -i ~/.ssh/id_ed25519 \
+            -o StrictHostKeyChecking=yes \
+            artifact/posref.jar \
+            "$VPS_USER@$VPS_HOST:/opt/posref/validacion/backend/posref.jar.tmp"
+
+      - name: Verificar archivo en Oracle
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          LOCAL_HASH=$(sha256sum artifact/posref.jar | awk '{print $1}')
+
+          REMOTE_HASH=$(ssh -i ~/.ssh/id_ed25519 \
+            -o StrictHostKeyChecking=yes \
+            "$VPS_USER@$VPS_HOST" \
+            "sha256sum /opt/posref/validacion/backend/posref.jar.tmp" \
+            | awk '{print $1}')
+
+          if [ "$LOCAL_HASH" != "$REMOTE_HASH" ]; then
+            echo "ERROR: Las firmas SHA256 no coinciden"
+            exit 1
+          fi
+
+          ssh -i ~/.ssh/id_ed25519 \
+            -o StrictHostKeyChecking=yes \
+            "$VPS_USER@$VPS_HOST" \
+            "mv /opt/posref/validacion/backend/posref.jar.tmp /opt/posref/validacion/backend/posref.jar && ls -lh /opt/posref/validacion/backend/posref.jar"
+
+          echo "JAR_TRANSFERIDO_CORRECTAMENTE"
+          echo "SHA256_VERIFICADO"
